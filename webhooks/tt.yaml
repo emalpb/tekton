@@ -1,0 +1,107 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: pipeline-cicd-tt
+  namespace: itlappointment-manager-dev
+spec:
+  params:
+  - name: APP_NAME
+    description: app name
+  - name: GIT_REPO
+    description: The git repository url
+  - name: GIT_REVISION
+    description: branch
+  - name: PROJECT
+    description: namespace
+    default: itlappointment-manager-dev
+  - name: VERSION
+    description: tag
+    default: latest
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1beta1
+    kind: PipelineRun
+    metadata:
+      generateName: pipeline-cicd-
+    spec:
+      pipelineRef:
+        name: pipeline-cicd
+      params:
+      - name: APP_NAME
+        value: $(tt.params.APP_NAME)
+      - name: GIT_REPO
+        value: $(tt.params.GIT_REPO)
+      - name: GIT_REVISION
+        value: $(tt.params.GIT_REVISION)
+      - name: PROJECT
+        value: itlappointment-manager-dev
+      - name: VERSION
+        value: latest   
+    workspaces: 
+          - name: pipelines
+            persistentVolumeClaim:
+               claimName: pipelines      
+
+
+
+
+
+
+               apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  creationTimestamp: '2021-06-07T22:23:07Z'
+  generation: 6
+  managedFields:
+    - apiVersion: triggers.tekton.dev/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:spec':
+          .: {}
+          'f:params': {}
+          'f:resourcetemplates': {}
+      manager: Mozilla
+      operation: Update
+      time: '2021-06-07T23:45:46Z'
+  name: pipeline-cicd-tt
+  namespace: itlappointment-manager-dev
+  resourceVersion: '503504040'
+  selfLink: >-
+    /apis/triggers.tekton.dev/v1alpha1/namespaces/itlappointment-manager-dev/triggertemplates/pipeline-cicd-tt
+  uid: 684482ac-7862-406c-8b2c-2a5b3aa44ab7
+spec:
+  params:
+    - description: app name
+      name: APP_NAME
+    - description: The git repository url
+      name: GIT_REPO
+    - description: branch
+      name: GIT_REVISION
+    - default: itlappointment-manager-dev
+      description: namespace
+      name: PROJECT
+    - default: latest
+      description: tag
+      name: VERSION
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: pipeline-cicd-
+      spec:
+        params:
+          - name: APP_NAME
+            value: $(tt.params.APP_NAME)
+          - name: GIT_REPO
+            value: $(tt.params.GIT_REPO)
+          - name: GIT_REVISION
+            value: $(tt.params.GIT_REVISION)
+          - name: PROJECT
+            value: itlappointment-manager-dev
+          - name: VERSION
+            value: latest
+        pipelineRef:
+          name: pipeline-cicd
+        workspaces:
+          - name: pipelines
+            persistentVolumeClaim:
+              claimName: pipelines

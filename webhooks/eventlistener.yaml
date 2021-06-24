@@ -1,0 +1,109 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: bitbucket-listener
+  namespace: itlappointment-manager-dev
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - name: bitbucket-triggers
+      interceptors:
+        - bitbucket:
+            secretRef:
+              secretName: bitbucket-credentials
+              secretKey: secretToken
+            eventTypes:
+              - push
+        - cel:
+            filter: "body.ref == 'refs/heads/development'"      
+      bindings:
+        - ref: pipeline-cicd-binding
+      template:
+        name: pipeline-cicd-tt
+
+
+
+
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  selfLink: >-
+    /apis/triggers.tekton.dev/v1alpha1/namespaces/itlappointment-manager-dev/eventlisteners/bitbucket-listener
+  resourceVersion: '503497010'
+  name: bitbucket-listener
+  uid: c543c432-6c39-4c3c-b70d-4aa394f9eea3
+  creationTimestamp: '2021-06-07T22:53:19Z'
+  generation: 6
+  managedFields:
+    - apiVersion: triggers.tekton.dev/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:finalizers': {}
+        'f:status':
+          .: {}
+          'f:address':
+            .: {}
+            'f:url': {}
+          'f:conditions': {}
+          'f:configuration':
+            .: {}
+            'f:generatedName': {}
+      manager: openshift-pipelines-triggers-controller
+      operation: Update
+      time: '2021-06-07T22:53:46Z'
+    - apiVersion: triggers.tekton.dev/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:spec':
+          .: {}
+          'f:serviceAccountName': {}
+          'f:triggers': {}
+      manager: Mozilla
+      operation: Update
+      time: '2021-06-07T23:30:31Z'
+  namespace: itlappointment-manager-dev
+  finalizers:
+    - eventlisteners.triggers.tekton.dev
+spec:
+  podTemplate: {}
+  serviceAccountName: pipeline
+  triggers:
+    - bindings:
+        - kind: TriggerBinding
+          ref: pipeline-cicd-binding
+      interceptors:
+        - cel:
+            filter: >-
+              header.canonical('X-Event-Key') == 'repo:refs_changed' &&
+              body.changes[0].refId == 'refs/heads/development'
+      name: bitbucket-triggers
+      template:
+        name: pipeline-cicd-tt
+status:
+  address:
+    url: >-
+      http://el-bitbucket-listener.itlappointment-manager-dev.svc.cluster.local:8080
+  conditions:
+    - lastTransitionTime: '2021-06-07T22:53:48Z'
+      message: Deployment has minimum availability.
+      reason: MinimumReplicasAvailable
+      status: 'True'
+      type: Available
+    - lastTransitionTime: '2021-06-07T22:53:48Z'
+      message: Deployment exists
+      status: 'True'
+      type: Deployment
+    - lastTransitionTime: '2021-06-07T22:53:48Z'
+      message: >-
+        ReplicaSet "el-bitbucket-listener-5d55c88dd9" has successfully
+        progressed.
+      reason: NewReplicaSetAvailable
+      status: 'True'
+      type: Progressing
+    - lastTransitionTime: '2021-06-07T22:53:48Z'
+      message: Service exists
+      status: 'True'
+      type: Service
+  configuration:
+    generatedName: el-bitbucket-listener

@@ -1,0 +1,138 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"tekton.dev/v1beta1","kind":"ClusterTask","metadata":{"annotations":{"tekton.dev/displayName":"sonarqube
+      scanner","tekton.dev/pipelines.minVersion":"0.12.1","tekton.dev/tags":"security"},"labels":{"app.kubernetes.io/version":"0.1"},"name":"sonarqube-scanner"},"spec":{"description":"The
+      following task can be used to perform static analysis on the source code
+      provided the SonarQube server is hosted\nSonarQube is the leading tool for
+      continuously inspecting the Code Quality and Security of your codebases,
+      all while empowering development teams. Analyze over 25 popular
+      programming languages including C#, VB.Net, JavaScript, TypeScript and
+      C++. It detects bugs, vulnerabilities and code smells across project
+      branches and pull requests.","params":[{"default":"","description":"Host
+      URL where the sonarqube server is
+      running","name":"SONAR_HOST_URL"},{"default":"","description":"Project's
+      unique
+      key","name":"SONAR_PROJECT_KEY"}],"steps":[{"image":"registry.access.redhat.com/ubi8/ubi-minimal:8.2","name":"sonar-properties-create","script":"#!/usr/bin/env
+      bash\n\nreplaceValues() {\n  filename=$1\n  thekey=$2\n  newvalue=$3\n\n 
+      if ! grep -R \"^[#]*\\s*${thekey}=.*\" $filename \u003e/dev/null;
+      then\n    echo \"APPENDING because '${thekey}' not found\"\n    echo \"\"
+      \u003e\u003e$filename\n    echo \"$thekey=$newvalue\"
+      \u003e\u003e$filename\n  else\n    echo \"SETTING because '${thekey}'
+      found already\"\n    sed -ir
+      \"s|^[#]*\\s*${thekey}=.*|$thekey=$newvalue|\" $filename\n  fi\n}\n\nif [[
+      -f $(workspaces.sonar-settings.path)/sonar-project.properties ]]; then\n 
+      echo \"using user provided sonar-project.properties file\"\n  cp -R
+      $(workspaces.sonar-settings.path)/sonar-project.properties
+      $(workspaces.source-dir.path)/sonar-project.properties\nfi\n\nif [[ -f
+      $(workspaces.source-dir.path)/sonar-project.properties ]]; then\n  if [[
+      -n \"$(params.SONAR_HOST_URL)\" ]]; then\n    replaceValues
+      $(workspaces.source-dir.path)/sonar-project.properties sonar.host.url
+      $(params.SONAR_HOST_URL)\n  fi\n  if [[ -n \"$(params.SONAR_PROJECT_KEY)\"
+      ]]; then\n    replaceValues
+      $(workspaces.source-dir.path)/sonar-project.properties sonar.projectKey
+      $(params.SONAR_PROJECT_KEY)\n  fi\nelse\n  touch
+      sonar-project.properties\n  echo
+      \"sonar.projectKey=$(params.SONAR_PROJECT_KEY)\" \u003e\u003e
+      sonar-project.properties\n  echo
+      \"sonar.host.url=$(params.SONAR_HOST_URL)\" \u003e\u003e
+      sonar-project.properties\n  echo \"sonar.sources=.\" \u003e\u003e
+      sonar-project.properties\nfi\n\necho \"---------------------------\"\ncat
+      $(workspaces.source-dir.path)/sonar-project.properties\n","workingDir":"$(workspaces.source-dir.path)"},{"command":["sonar-scanner"],"image":"docker.io/sonarsource/sonar-scanner-cli:4.5@sha256:b8c95a37025f3c13162118cd55761ea0b2a13d1837f9deec51b7b6d82c52040a","name":"sonar-scan","workingDir":"$(workspaces.source-dir.path)"}],"workspaces":[{"name":"source-dir"},{"name":"sonar-settings"}]}}
+    tekton.dev/displayName: sonarqube scanner
+    tekton.dev/pipelines.minVersion: 0.12.1
+    tekton.dev/tags: security
+  creationTimestamp: '2021-05-06T22:00:10Z'
+  generation: 4
+  labels:
+    app.kubernetes.io/version: '0.1'
+  name: sonarqube-scanner
+  resourceVersion: '482543778'
+  selfLink: /apis/tekton.dev/v1beta1/clustertasks/sonarqube-scanner
+  uid: 8186fa33-7cf7-4f8a-986a-75d89cc2a8fc
+spec:
+  description: >-
+    The following task can be used to perform static analysis on the source code
+    provided the SonarQube server is hosted
+
+    SonarQube is the leading tool for continuously inspecting the Code Quality
+    and Security of your codebases, all while empowering development teams.
+    Analyze over 25 popular programming languages including C#, VB.Net,
+    JavaScript, TypeScript and C++. It detects bugs, vulnerabilities and code
+    smells across project branches and pull requests.
+  params:
+    - default: ''
+      description: Host URL where the sonarqube server is running
+      name: SONAR_HOST_URL
+      type: string
+    - default: ''
+      description: Project's unique key
+      name: SONAR_PROJECT_KEY
+      type: string
+  steps:
+    - image: 'registry.access.redhat.com/ubi8/ubi-minimal:8.2'
+      name: sonar-properties-create
+      resources: {}
+      script: >
+        #!/usr/bin/env bash
+
+
+        replaceValues() {
+          filename=$1
+          thekey=$2
+          newvalue=$3
+
+          if ! grep -R "^[#]*\s*${thekey}=.*" $filename >/dev/null; then
+            echo "APPENDING because '${thekey}' not found"
+            echo "" >>$filename
+            echo "$thekey=$newvalue" >>$filename
+          else
+            echo "SETTING because '${thekey}' found already"
+            sed -ir "s|^[#]*\s*${thekey}=.*|$thekey=$newvalue|" $filename
+          fi
+        }
+
+
+        if [[ -f $(workspaces.sonar-settings.path)/sonar-project.properties ]];
+        then
+          echo "using user provided sonar-project.properties file"
+          cp -R $(workspaces.sonar-settings.path)/sonar-project.properties $(workspaces.source-dir.path)/sonar-project.properties
+        fi
+
+
+        if [[ -f $(workspaces.source-dir.path)/sonar-project.properties ]]; then
+          if [[ -n "$(params.SONAR_HOST_URL)" ]]; then
+            replaceValues $(workspaces.source-dir.path)/sonar-project.properties sonar.host.url $(params.SONAR_HOST_URL)
+          fi
+          if [[ -n "$(params.SONAR_PROJECT_KEY)" ]]; then
+            replaceValues $(workspaces.source-dir.path)/sonar-project.properties sonar.projectKey $(params.SONAR_PROJECT_KEY)
+          fi
+        else
+          touch sonar-project.properties
+          echo "sonar.projectKey=$(params.SONAR_PROJECT_KEY)" >> sonar-project.properties
+          echo "sonar.host.url=$(params.SONAR_HOST_URL)" >> sonar-project.properties
+          echo "sonar.sources=." >> sonar-project.properties
+          echo "sonar.login=c2c2f3d5321204e8c1424c6bab6c2e01b1a3bf7d" >> sonar-project.properties
+          echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties 
+          echo "sonar.sources=src/main/java/" >> sonar-project.properties 
+          echo "sonar.language=java" >> sonar-project.properties 
+          echo "sonar.java.binaries=src/" >> sonar-project.properties 
+        fi
+
+
+        echo "---------------------------"
+
+        cat $(workspaces.source-dir.path)/sonar-project.properties
+      workingDir: $(workspaces.source-dir.path)
+    - command:
+        - sonar-scanner
+      image: >-
+        docker.io/sonarsource/sonar-scanner-cli:4.5@sha256:b8c95a37025f3c13162118cd55761ea0b2a13d1837f9deec51b7b6d82c52040a
+      name: sonar-scan
+      resources: {}
+      workingDir: $(workspaces.source-dir.path)
+  workspaces:
+    - name: source-dir
+    - name: sonar-settings

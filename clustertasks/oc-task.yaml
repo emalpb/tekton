@@ -1,0 +1,119 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: >
+      {"apiVersion":"tekton.dev/v1beta1","kind":"ClusterTask","metadata":{"annotations":{"manifestival":"new","tekton.dev/displayName":"openshift
+      client","tekton.dev/pipelines.minVersion":"0.12.1","tekton.dev/tags":"cli"},"labels":{"app.kubernetes.io/version":"0.1","operator.tekton.dev/provider-type":"redhat"},"name":"oc-task","namespace":"openshift-pipelines","ownerReferences":[{"apiVersion":"operator.tekton.dev/v1alpha1","blockOwnerDeletion":true,"controller":true,"kind":"Config","name":"cluster","uid":"4f8883e3-eecb-49c8-92f6-6f267941e8bb"}]},"spec":{"description":"This
+      task runs commands against the cluster where the task run is being
+      executed.\nOpenShift is a Kubernetes distribution from Red Hat which
+      provides oc, the OpenShift CLI that complements kubectl for simplifying
+      deployment and configuration applications on
+      OpenShift.","params":[{"default":"oc $@","description":"The OpenShift CLI
+      arguments to
+      run","name":"SCRIPT","type":"string"},{"default":["help"],"description":"The
+      OpenShift CLI arguments to
+      run","name":"ARGS","type":"array"}],"resources":{"inputs":[{"name":"source","optional":true,"type":"git"}]},"steps":[{"args":["$(params.ARGS)"],"image":"image-registry.openshift-image-registry.svc:5000/openshift/cli:latest","name":"oc","script":"$(params.SCRIPT)"}]}}
+    manifestival: new
+    tekton.dev/displayName: openshift client
+    tekton.dev/pipelines.minVersion: 0.12.1
+    tekton.dev/tags: cli
+  selfLink: /apis/tekton.dev/v1beta1/clustertasks/oc-task
+  resourceVersion: '500600196'
+  name: oc-task
+  uid: 4ea1bd3b-824a-407a-9e5f-803764bea15a
+  creationTimestamp: '2021-06-02T23:00:23Z'
+  generation: 20
+  managedFields:
+    - apiVersion: tekton.dev/v1beta1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:metadata':
+          'f:annotations':
+            .: {}
+            'f:kubectl.kubernetes.io/last-applied-configuration': {}
+            'f:manifestival': {}
+            'f:tekton.dev/displayName': {}
+            'f:tekton.dev/pipelines.minVersion': {}
+            'f:tekton.dev/tags': {}
+          'f:labels':
+            .: {}
+            'f:app.kubernetes.io/version': {}
+            'f:operator.tekton.dev/provider-type': {}
+          'f:ownerReferences':
+            .: {}
+            'k:{"uid":"4f8883e3-eecb-49c8-92f6-6f267941e8bb"}':
+              .: {}
+              'f:apiVersion': {}
+              'f:blockOwnerDeletion': {}
+              'f:controller': {}
+              'f:kind': {}
+              'f:name': {}
+              'f:uid': {}
+        'f:spec':
+          .: {}
+          'f:description': {}
+          'f:params': {}
+          'f:steps': {}
+          'f:workspaces': {}
+      manager: Mozilla
+      operation: Update
+      time: '2021-06-04T22:09:35Z'
+  ownerReferences:
+    - apiVersion: operator.tekton.dev/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Config
+      name: cluster
+      uid: 4f8883e3-eecb-49c8-92f6-6f267941e8bb
+  labels:
+    app.kubernetes.io/version: '0.1'
+    operator.tekton.dev/provider-type: redhat
+spec:
+  description: >-
+    This task runs commands against the cluster where the task run is being
+    executed.
+
+    OpenShift is a Kubernetes distribution from Red Hat which provides oc, the
+    OpenShift CLI that complements kubectl for simplifying deployment and
+    configuration applications on OpenShift.
+  params:
+    - description: Application name
+      name: APP_NAME
+      type: string
+    - description: Version tag
+      name: VERSION
+      type: string
+    - description: Namespace name
+      name: PROJECT
+      type: string
+  steps:
+    - image: 'image-registry.openshift-image-registry.svc:5000/openshift/cli:latest'
+      name: oc-create-elements
+      resources: {}
+      script: >
+        #!/usr/bin/env bash
+
+        echo "$(params.APP_NAME)"
+
+
+        echo "$(params.VERSION)"
+
+
+        echo "$(params.PROJECT)"
+
+
+        JSON='{"apiVersion":"v1","kind":"DeploymentConfig","metadata":{"name":"$(params.APP_NAME)","labels":{"app":"$(params.APP_NAME)","service":"$(params.APP_NAME)"},"namespace":"$(params.PROJECT)"},"spec":{"template":{"metadata":{"labels":{"app":"$(params.APP_NAME)","service":"$(params.APP_NAME)"}},"spec":{"containers":[{"name":"$(params.APP_NAME)","image":"image-registry.openshift-image-registry.svc:5000/$(params.PROJECT)/$(params.APP_NAME):$(params.VERSION)","ports":[{"containerPort":3000}]}]},"replicas":1,"strategy":{"type":"Rolling"}}}}'
+
+        JSON_SVC='{"apiVersion":"v1","kind":"Service","metadata":{"name":"$(params.APP_NAME)","namespace":"$(params.PROJECT)","labels":{"app":"$(params.APP_NAME)"}},"spec":{"ports":[{"name":"8080-tcp","protocol":"TCP","port":8080,"targetPort":8080}],"selector":{"app":"$(params.APP_NAME)","deploymentconfig":"$(params.APP_NAME)"}}}'
+
+        JSON_ROUTE='{"apiVersion":"route.openshift.io/v1","kind":"Route","metadata":{"name":"$(params.APP_NAME)","namespace":"$(params.PROJECT)","labels":{"app":"$(params.APP_NAME)"}},"spec":{"path":"/","to":{"kind":"Service","name":"$(params.APP_NAME)"},"port":{"targetPort":8080}}}'
+
+        echo $JSON | oc apply -f- 
+
+        echo $JSON_SVC | oc apply -f- 
+
+        echo $JSON_ROUTE | oc apply -f-
+  workspaces:
+    - description: The Ansibler runner directory
+      name: oc

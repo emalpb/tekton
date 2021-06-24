@@ -1,0 +1,123 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  creationTimestamp: '2021-05-13T05:54:25Z'
+  generation: 76
+  labels:
+    pipeline.openshift.io/type: openshift
+  name: pipeline-cicd
+  namespace: itlappointment-manager-dev
+  resourceVersion: '500617405'
+  selfLink: >-
+    /apis/tekton.dev/v1beta1/namespaces/itlappointment-manager-dev/pipelines/pipeline-cicd
+  uid: 4fc5d6b1-c49a-4bf4-acd1-f312a728e710
+spec:
+  params:
+    - name: APP_NAME
+      type: string
+    - name: GIT_REPO
+      type: string
+    - name: GIT_REVISION
+      type: string
+    - name: PROJECT
+      type: string
+    - name: VERSION
+      type: string
+  tasks:
+    - name: fetch-repository
+      params:
+        - name: url
+          value: $(params.GIT_REPO)
+        - name: revision
+          value: $(params.GIT_REVISION)
+        - name: deleteExisting
+          value: 'true'
+      runAfter:
+        - oc-task
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: pipelines
+    - name: build
+      params:
+        - name: IMAGE
+          value: >-
+            image-registry.openshift-image-registry.svc:5000/$(params.PROJECT)/$(params.APP_NAME):$(params.VERSION)
+        - name: TLSVERIFY
+          value: 'false'
+        - name: PATH_CONTEXT
+          value: .
+        - name: MAVEN_ARGS_APPEND
+          value: '-Dmaven.test.skip=true'
+      runAfter:
+        - sonarqube-scanner
+      taskRef:
+        kind: ClusterTask
+        name: s2i-java-11
+      workspaces:
+        - name: source
+          workspace: pipelines
+    - name: deploy
+      params:
+        - name: ARGS
+          value:
+            - rollout
+            - latest
+            - dc/$(params.APP_NAME)
+      runAfter:
+        - build
+      taskRef:
+        kind: ClusterTask
+        name: openshift-client
+    - name: sonarqube-scanner
+      params:
+        - name: SONAR_HOST_URL
+          value: 'http://sonarqube-sonarqube.apps.arg-itl-ocp01.itl.com.ar/'
+        - name: SONAR_PROJECT_KEY
+          value: $(params.PROJECT)-$(params.APP_NAME)-$(params.VERSION)
+      runAfter:
+        - maven
+      taskRef:
+        kind: ClusterTask
+        name: sonarqube-scanner
+      workspaces:
+        - name: source-dir
+          workspace: pipelines
+        - name: sonar-settings
+          workspace: pipelines
+    - name: maven
+      params:
+        - name: MAVEN_IMAGE
+          value: >-
+            gcr.io/cloud-builders/mvn@sha256:57523fc43394d6d9d2414ee8d1c85ed7a13460cbb268c3cd16d28cfb3859e641
+        - name: GOALS
+          value:
+            - install
+      runAfter:
+        - fetch-repository
+      taskRef:
+        kind: ClusterTask
+        name: maven
+      workspaces:
+        - name: source
+          workspace: pipelines
+        - name: maven-settings
+          workspace: pipelines
+    - name: oc-task
+      params:
+        - name: VERSION
+          value: $(params.VERSION)
+        - name: PROJECT
+          value: $(params.PROJECT)
+        - name: APP_NAME
+          value: $(params.APP_NAME)
+      taskRef:
+        kind: ClusterTask
+        name: oc-task
+      workspaces:
+        - name: oc
+          workspace: pipelines
+  workspaces:
+    - name: pipelines

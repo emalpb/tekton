@@ -1,0 +1,109 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  creationTimestamp: '2021-06-08T23:17:03Z'
+  generation: 12
+  managedFields:
+    - apiVersion: tekton.dev/v1beta1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:spec':
+          .: {}
+          'f:params': {}
+          'f:resources': {}
+          'f:tasks': {}
+          'f:workspaces': {}
+      manager: Mozilla
+      operation: Update
+      time: '2021-06-09T01:12:38Z'
+  name: pipeline-cd-qa
+  namespace: itlappointment-manager-qa
+  resourceVersion: '504340147'
+  selfLink: >-
+    /apis/tekton.dev/v1beta1/namespaces/itlappointment-manager-qa/pipelines/pipeline-cd-qa
+  uid: 3e526b58-7078-423d-8ea7-7565333bbe86
+spec:
+  params:
+    - name: APP_NAME
+      type: string
+    - default: itlappointment-manager-qa
+      name: PROJECT
+      type: string
+    - name: VERSION
+      type: string
+  tasks:
+    - name: oc-task
+      params:
+        - name: APP_NAME
+          value: $(params.APP_NAME)
+        - name: VERSION
+          value: $(params.VERSION)
+        - name: PROJECT
+          value: $(params.PROJECT)
+      taskRef:
+        kind: ClusterTask
+        name: oc-task
+      workspaces:
+        - name: oc
+          workspace: pipelines
+    - name: tag
+      params:
+        - name: SCRIPT
+          value: oc $@
+        - name: ARGS
+          value:
+            - tag
+            - 'itlappointment-manager-dev/$(params.APP_NAME):latest'
+            - 'itlappointment-manager-qa/$(params.APP_NAME):$(params.VERSION)'
+      runAfter:
+        - oc-task
+      taskRef:
+        kind: ClusterTask
+        name: openshift-client
+    - name: deploy
+      params:
+        - name: SCRIPT
+          value: oc $@
+        - name: ARGS
+          value:
+            - rollout
+            - latest
+            - dc/$(params.APP_NAME)
+      runAfter:
+        - scale
+      taskRef:
+        kind: ClusterTask
+        name: openshift-client
+    - name: patch
+      params:
+        - name: SCRIPT
+          value: oc $@
+        - name: ARGS
+          value:
+            - patch
+            - dc/$(params.APP_NAME)
+            - '-p'
+            - >-
+              [{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"image-registry.openshift-image-registry.svc:5000/$(params.PROJECT)/$(params.APP_NAME):$(params.VERSION)"}]
+            - '--type=json'
+      runAfter:
+        - tag
+      taskRef:
+        kind: ClusterTask
+        name: openshift-client
+    - name: scale
+      params:
+        - name: SCRIPT
+          value: oc $@
+        - name: ARGS
+          value:
+            - scale
+            - dc/$(params.APP_NAME)
+            - '--replicas=1'
+      runAfter:
+        - patch
+      taskRef:
+        kind: ClusterTask
+        name: openshift-client
+  workspaces:
+    - name: pipelines

@@ -1,0 +1,46 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: pipeline-cicd-binding
+  namespace: itlappointment-manager-dev
+spec:
+  params:
+    - name: revision
+      value: '$(body.changes[0].ref.displayId)'
+    - name: repo
+      value: '$(body.repository.links.clone[0].href)'
+    - name: appname
+      value: $(body.repository.name)
+
+
+
+
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  creationTimestamp: '2021-06-07T22:23:26Z'
+  generation: 4
+  managedFields:
+    - apiVersion: triggers.tekton.dev/v1alpha1
+      fieldsType: FieldsV1
+      fieldsV1:
+        'f:spec':
+          .: {}
+          'f:params': {}
+      manager: Mozilla
+      operation: Update
+      time: '2021-06-07T23:39:57Z'
+  name: pipeline-cicd-binding
+  namespace: itlappointment-manager-dev
+  resourceVersion: '503501201'
+  selfLink: >-
+    /apis/triggers.tekton.dev/v1alpha1/namespaces/itlappointment-manager-dev/triggerbindings/pipeline-cicd-binding
+  uid: 49b5c2a9-d888-4f8c-81d8-0890af97fad5
+spec:
+  params:
+    - name: GIT_REVISION
+      value: '$(body.changes[0].ref.displayId)'
+    - name: GIT_REPO
+      value: 'https://bitbucket.itl.com.ar/scm/irp/$(body.repository.name)'
+    - name: APP_NAME
+      value: $(body.repository.name)
