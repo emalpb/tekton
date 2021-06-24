@@ -114,7 +114,7 @@ spec:
           echo "sonar.projectKey=$(params.SONAR_PROJECT_KEY)" >> sonar-project.properties
           echo "sonar.host.url=$(params.SONAR_HOST_URL)" >> sonar-project.properties
           echo "sonar.sources=." >> sonar-project.properties
-          echo "sonar.login=c2c2f3d5321204e8c1424c6bab6c2e01b1a3bf7d" >> sonar-project.properties
+          echo "sonar.login=TOKEN" >> sonar-project.properties
           echo "sonar.sourceEncoding=UTF-8" >> sonar-project.properties 
           echo "sonar.sources=src/main/java/" >> sonar-project.properties 
           echo "sonar.language=java" >> sonar-project.properties 
